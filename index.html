@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Name Pronunciator</title>
+  <style>
+    :root {
+      --bg: 0F172A_1;
+      --panel: 111827_1;
+      --text: E5E7EB_1;
+      --muted: 9CA3AF_1;
+      --accent: 22C55E_1;
+      --border: 1F2937_1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1000px 600px at 10% 10%, 1F2937_1, var(--bg));
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      padding: 2rem 1.25rem 0.75rem;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      letter-spacing: 0.3px;
+    }
+    header p {
+      margin: 0.5rem 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1.25rem;
+    }
+    .card {
+      background: linear-gradient(180deg, 0B1220_1, var(--panel));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 720px) {
+      .row { grid-template-columns: 2fr 1fr; }
+    }
+    label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    input[type="text"], select, input[type="range"] {
+      width: 100%;
+      padding: 0.7rem 0.8rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: 0B1220_1;
+      color: var(--text);
+      outline: none;
+    }
+    input[type="text"]::placeholder { color: 6B7280_1; }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      align-items: end;
+    }
+    .out {
+      margin-top: 0.5rem;
+      padding: 0.9rem;
+      border: 1px dashed 334155_1;
+      border-radius: 10px;
+      background: 0A0F1A_1;
+      font-size: 1.05rem;
+      word-wrap: break-word;
+    }
+    .btns {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+    button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: 0B1220_1;
+      color: var(--text);
+      padding: 0.65rem 0.9rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary {
+      background: linear-gradient(180deg, 16A34A_1, 22C55E_1);
+      color: 022C1A_1;
+      border: none;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 1rem 1.25rem 2rem;
+    }
+    .hint { color: var(--muted); font-size: 0.9rem; }
+    .tiny { font-size: 0.85rem; color: var(--muted); }
+    .pill {
+      display: inline-block;
+      border: 1px solid 334155_1;
+      border-radius: 999px;
+      padding: 0.15rem 0.6rem;
+      margin-left: 0.35rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Name Pronunciator <span class="pill">written + spoken</span></h1>
+    <p>Type a name, get a readable phonetic spelling and hear it aloud.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="name">Name</label>
+          <input id="name" type="text" placeholder="e.g., Brandon, Joaquin, Siobhan" autocomplete="off" />
+          <div class="btns">
+            <button id="spellBtn" class="primary">Get written pronunciation</button>
+            <button id="speakBtn">Speak</button>
+            <button id="stopBtn">Stop</button>
+          </div>
+          <div class="out" id="writtenOut" aria-live="polite">Written pronunciation will appear here.</div>
+          <p class="hint">Tip: Try multiple spellings if the name is uncommon. You can edit the result to taste.</p>
+        </div>
+
+        <div>
+          <label for="voice">Voice</label>
+          <select id="voice"></select>
+
+          <div class="controls" style="margin-top:0.75rem">
+            <div>
+              <label for="rate">Rate</label>
+              <input id="rate" type="range" min="0.6" max="1.6" step="0.02" value="1" />
+              <div class="tiny">1.00 = normal</div>
+            </div>
+            <div>
+              <label for="pitch">Pitch</label>
+              <input id="pitch" type="range" min="0.7" max="1.5" step="0.02" value="1" />
+              <div class="tiny">1.00 = neutral</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      This is an approximation. For precise or multilingual pronunciations, plug in larger dictionaries or services.
+    </footer>
+  </main>
+
+  <script>
+    // --- Small name dictionary for tricky cases (expand as needed) ---
+    const NAME_DICT = {
+      "brandon": "BRAN-dun",
+      "michael": "MYE-kull",
+      "rachel": "RAY-chull",
+      "joaquin": "wah-KEEN",
+      "siobhan": "shi-VAWN",
+      "aoife": "EE-fa",
+      "niamh": "NEEV",
+      "sean": "SHAWN",
+      "jose": "ho-ZAY",
+      "juan": "WON",
+      "chaim": "KHAH-yeem",
+      "xavier": "ZAY-vee-er",
+      "phoebe": "FEE-bee",
+      "geoff": "JEFF",
+      "tatiana": "tah-tee-AH-nah",
+      "miguel": "mee-GEL",
+      "kevin": "KEV-in",
+      "brendan": "BREN-dun",
+      "saoirse": "SEER-sha",
+      "eoin": "OH-in",
+      "cillian": "KILL-ee-un",
+      "gianna": "jee-AH-nah",
+      "leon": "LEE-on",
+      "leonie": "LEE-oh-nee",
+      "zachary": "ZAK-uh-ree"
+    };
+
+    // --- Heuristic phonetic approximation for English-like names ---
+    function toPhonetic(nameRaw) {
+      if (!nameRaw) return "";
+      const n = nameRaw.trim();
+      if (!n) return "";
+      const key = n.toLowerCase();
+      if (NAME_DICT[key]) return NAME_DICT[key];
+
+      // Basic cleanup
+      let s = key
+        .replace(/[^a-z' -]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // Common clusters
+      s = s.replace(/ph/g, "f")
+           .replace(/ck/g, "k")
+           .replace(/qu/g, "kw")
+           .replace(/x/g, "z")   // often "z" at start (e.g., Xavier); simplified
+           .replace(/gh(?=[aeiou])/g, "")
+           .replace(/gh/g, "g")
+           .replace(/ough/g, "off"); // rough approximation
+
+      // Vowel nudges
+      s = s.replace(/ea/g, "ee")
+           .replace(/ie/g, "ee")
+           .replace(/ei/g, "ee")
+           .replace(/oe/g, "oh")
+           .replace(/ai/g, "ay")
+           .replace(/ay/g, "ay")
+           .replace(/au/g, "aw")
+           .replace(/ou/g, "oo");
+
+      // Syllable-ish splitting
+      const chunks = s
+        .split(/[- ']/)
+        .map(part => part.replace(/([bcdfghjklmnpqrstvwxyz])\1+/g, "$1")) // collapse repeats
+        .map(part => part.replace(/([aeiou])([bcdfghjklmnpqrstvwxyz])$/g, "$1-$2")) // end consonant
+        .flatMap(p => p.split(/(?=[aeiou])/));
+
+      // Map letters to readable sounds (very rough)
+      const mapSound = (chunk) => {
+        return chunk
+          .replace(/^ch/g, "CH")
+          .replace(/^sh/g, "SH")
+          .replace(/^th/g, "TH")
+          .replace(/^j/g, "J")
+          .replace(/^c(?=[eiy])/g, "S")
+          .replace(/^c/g, "K")
+          .replace(/^g(?=[eiy])/g, "J")
+          .replace(/^g/g, "G")
+          .replace(/a/g, "ah")
+          .replace(/e/g, "eh")
+          .replace(/i/g, "ih")
+          .replace(/o/g, "oh")
+          .replace(/u/g, "uh")
+          .replace(/y/g, "ee"); // often vowel-like
+      };
+
+      const out = chunks
+        .filter(Boolean)
+        .map(c => {
+          const cleaned = c.replace(/[^a-z]/g, "");
+          const sound = mapSound(cleaned);
+          // Stress heuristic: uppercase first syllable
+          return sound ? sound.toUpperCase().replace(/([A-Z]{2,})/g, (m)=>m) : cleaned.toUpperCase();
+        })
+        .join("-");
+
+      // Cleanup readability
+      return out
+        .replace(/-+/g, "-")
+        .replace(/EE/g, "EE")
+        .replace(/UH/g, "UH")
+        .replace(/IH/g, "IH")
+        .replace(/OH/g, "OH")
+        .replace(/AH/g, "AH");
+    }
+
+    // --- Web Speech API: speak the name using selected voice ---
+    const voiceSelect = document.getElementById("voice");
+    const rateInput = document.getElementById("rate");
+    const pitchInput = document.getElementById("pitch");
+    const speakBtn = document.getElementById("speakBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const spellBtn = document.getElementById("spellBtn");
+    const nameInput = document.getElementById("name");
+    const writtenOut = document.getElementById("writtenOut");
+
+    let voices = [];
+
+    function loadVoices() {
+      voices = window.speechSynthesis.getVoices();
+      voiceSelect.innerHTML = "";
+      voices.forEach((v, i) => {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = `${v.name} — ${v.lang}`;
+        voiceSelect.appendChild(opt);
+      });
+      if (!voices.length) {
+        const opt = document.createElement("option");
+        opt.textContent = "No voices available yet (try clicking Speak)";
+        opt.disabled = true;
+        voiceSelect.appendChild(opt);
+      }
+    }
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    function speak(text) {
+      if (!text) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      const idx = parseInt(voiceSelect.value, 10);
+      if (voices[idx]) utter.voice = voices[idx];
+      utter.rate = parseFloat(rateInput.value);
+      utter.pitch = parseFloat(pitchInput.value);
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }
+
+    spellBtn.addEventListener("click", () => {
+      const name = nameInput.value;
+      if (!name.trim()) {
+        writtenOut.textContent = "Please enter a name.";
+        return;
+      }
+      const phon = toPhonetic(name);
+      writtenOut.textContent = phon || "Couldn’t approximate. Try another spelling or add to the dictionary.";
+    });
+
+    speakBtn.addEventListener("click", () => {
+      const name = nameInput.value.trim();
+      if (!name) return;
+      speak(name);
+    });
+
+    stopBtn.addEventListener("click", () => {
+      window.speechSynthesis.cancel();
+    });
+
+    // Quality of life: Enter triggers written pronunciation
+    nameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") spellBtn.click();
+    });
+  </script>
+</body>
+</html>
